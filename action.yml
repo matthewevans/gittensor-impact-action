@@ -1,0 +1,179 @@
+name: Gittensor Impact Action
+description: Generate and publish a Gittensor contributor impact card for a GitHub repository.
+author: Matt Evans
+
+branding:
+  icon: activity
+  color: orange
+
+inputs:
+  repo:
+    description: GitHub repository in owner/name form. Defaults to the workflow repository.
+    required: false
+  since:
+    description: Git date window for the report.
+    required: false
+    default: 30 days ago
+  until:
+    description: Optional Git date window end.
+    required: false
+  ref:
+    description: Git ref to analyze.
+    required: false
+    default: HEAD
+  release-tag:
+    description: Stable release tag that stores the generated SVG assets.
+    required: false
+    default: gittensor-impact
+  title:
+    description: Optional title rendered at the top of the card.
+    required: false
+  subtitle:
+    description: Optional subtitle rendered under the title.
+    required: false
+  accent-color:
+    description: Primary color for Gittensor contribution data.
+    required: false
+    default: "#ff6a00"
+  accent-alt-color:
+    description: Secondary accent color for labels.
+    required: false
+  neutral-color:
+    description: Comparator color for non-Gittensor contribution data.
+    required: false
+    default: "#85898b"
+  neutral-text-color:
+    description: Optional text color for non-Gittensor labels.
+    required: false
+  dark-background:
+    description: Optional dark theme background color.
+    required: false
+  light-background:
+    description: Optional light theme background color.
+    required: false
+  gittensor-api-url:
+    description: Public Gittensor PR API URL.
+    required: false
+    default: https://api.gittensor.io/prs
+  pr-limit:
+    description: Maximum merged PRs to fetch from GitHub.
+    required: false
+    default: "6000"
+  github-token:
+    description: GitHub token with contents:write permission for release asset publishing.
+    required: false
+
+outputs:
+  dark-svg-url:
+    description: Public URL for the dark theme SVG.
+    value: ${{ steps.publish.outputs.dark-svg-url }}
+  light-svg-url:
+    description: Public URL for the light theme SVG.
+    value: ${{ steps.publish.outputs.light-svg-url }}
+  readme-html:
+    description: HTML snippet for embedding the generated card in a README.
+    value: ${{ steps.publish.outputs.readme-html }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate Gittensor impact assets
+      shell: bash
+      env:
+        INPUT_REPO: ${{ inputs.repo }}
+        INPUT_SINCE: ${{ inputs.since }}
+        INPUT_UNTIL: ${{ inputs.until }}
+        INPUT_REF: ${{ inputs.ref }}
+        INPUT_TITLE: ${{ inputs.title }}
+        INPUT_SUBTITLE: ${{ inputs.subtitle }}
+        INPUT_ACCENT_COLOR: ${{ inputs.accent-color }}
+        INPUT_ACCENT_ALT_COLOR: ${{ inputs.accent-alt-color }}
+        INPUT_NEUTRAL_COLOR: ${{ inputs.neutral-color }}
+        INPUT_NEUTRAL_TEXT_COLOR: ${{ inputs.neutral-text-color }}
+        INPUT_DARK_BACKGROUND: ${{ inputs.dark-background }}
+        INPUT_LIGHT_BACKGROUND: ${{ inputs.light-background }}
+        INPUT_GITTENSOR_API_URL: ${{ inputs.gittensor-api-url }}
+        INPUT_PR_LIMIT: ${{ inputs.pr-limit }}
+      run: |
+        set -euo pipefail
+
+        repo="${INPUT_REPO:-$GITHUB_REPOSITORY}"
+        out_dir="$RUNNER_TEMP/gittensor-impact"
+        mkdir -p "$out_dir"
+
+        stats_args=(
+          --repo-dir "$GITHUB_WORKSPACE"
+          --repo "$repo"
+          --ref "$INPUT_REF"
+          --since "$INPUT_SINCE"
+          --gittensor-api-url "$INPUT_GITTENSOR_API_URL"
+          --pr-limit "$INPUT_PR_LIMIT"
+          --out "$out_dir/stats.json"
+        )
+        if [ -n "$INPUT_UNTIL" ]; then
+          stats_args+=(--until "$INPUT_UNTIL")
+        fi
+
+        python3 "$GITHUB_ACTION_PATH/scripts/gittensor_stats.py" "${stats_args[@]}"
+
+        render_common=(
+          --accent-color "$INPUT_ACCENT_COLOR"
+          --neutral-color "$INPUT_NEUTRAL_COLOR"
+        )
+        if [ -n "$INPUT_TITLE" ]; then render_common+=(--title "$INPUT_TITLE"); fi
+        if [ -n "$INPUT_SUBTITLE" ]; then render_common+=(--subtitle "$INPUT_SUBTITLE"); fi
+        if [ -n "$INPUT_ACCENT_ALT_COLOR" ]; then render_common+=(--accent-alt-color "$INPUT_ACCENT_ALT_COLOR"); fi
+        if [ -n "$INPUT_NEUTRAL_TEXT_COLOR" ]; then render_common+=(--neutral-text-color "$INPUT_NEUTRAL_TEXT_COLOR"); fi
+        if [ -n "$INPUT_DARK_BACKGROUND" ]; then render_common+=(--dark-background "$INPUT_DARK_BACKGROUND"); fi
+        if [ -n "$INPUT_LIGHT_BACKGROUND" ]; then render_common+=(--light-background "$INPUT_LIGHT_BACKGROUND"); fi
+
+        python3 "$GITHUB_ACTION_PATH/scripts/render_svg.py" \
+          "$out_dir/stats.json" "$out_dir/gittensor-impact-dark.svg" \
+          --theme dark "${render_common[@]}"
+        python3 "$GITHUB_ACTION_PATH/scripts/render_svg.py" \
+          "$out_dir/stats.json" "$out_dir/gittensor-impact-light.svg" \
+          --theme light "${render_common[@]}"
+
+    - name: Publish release assets
+      id: publish
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token || github.token }}
+        INPUT_REPO: ${{ inputs.repo }}
+        INPUT_RELEASE_TAG: ${{ inputs.release-tag }}
+      run: |
+        set -euo pipefail
+
+        repo="${INPUT_REPO:-$GITHUB_REPOSITORY}"
+        out_dir="$RUNNER_TEMP/gittensor-impact"
+        python3 "$GITHUB_ACTION_PATH/scripts/publish_release_assets.py" \
+          --repo "$repo" \
+          --tag "$INPUT_RELEASE_TAG" \
+          "$out_dir/gittensor-impact-dark.svg" \
+          "$out_dir/gittensor-impact-light.svg"
+
+        dark_url="https://github.com/$repo/releases/download/$INPUT_RELEASE_TAG/gittensor-impact-dark.svg"
+        light_url="https://github.com/$repo/releases/download/$INPUT_RELEASE_TAG/gittensor-impact-light.svg"
+        gittensor_url="https://gittensor.io/miners/repository?name=${repo/\//%2F}"
+
+        {
+          echo "dark-svg-url=$dark_url"
+          echo "light-svg-url=$light_url"
+          echo "readme-html<<EOF"
+          cat <<HTML
+        <p align="center">
+          <a href="$gittensor_url">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="$dark_url">
+              <source media="(prefers-color-scheme: light)" srcset="$light_url">
+              <img src="$light_url" alt="Gittensor contributor impact" width="600">
+            </picture>
+          </a>
+        </p>
+        HTML
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
