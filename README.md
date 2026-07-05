@@ -5,8 +5,21 @@ attributed to Gittensor contributors.
 
 The action reads merged PR attribution from the public Gittensor API, compares it
 with repository Git history, renders dark and light SVG cards, and publishes the
-cards as stable GitHub release assets. Generated images do not need to be
-committed to the target repository.
+cards to either stable GitHub release assets or a dedicated assets branch.
+Generated images do not need to be committed to the target repository's default
+branch.
+
+## Example
+
+<p align="center">
+  <a href="https://gittensor.io/miners/repository?name=phase-rs%2Fphase">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/phase-rs/phase/gittensor-impact-assets/gittensor-impact-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/phase-rs/phase/gittensor-impact-assets/gittensor-impact-light.svg">
+      <img src="https://raw.githubusercontent.com/phase-rs/phase/gittensor-impact-assets/gittensor-impact-light.svg" alt="Gittensor contributor impact for phase.rs" width="600">
+    </picture>
+  </a>
+</p>
 
 ## Usage
 
@@ -50,6 +63,30 @@ Run the workflow once, then add this to your README:
 
 Replace `OWNER` and `REPO` with your repository owner and name.
 
+If the repository has immutable releases enabled, publish to a dedicated assets
+branch instead:
+
+```yaml
+- uses: matthewevans/gittensor-impact-action@v1
+  with:
+    publish-mode: branch
+    asset-branch: gittensor-impact-assets
+```
+
+Branch-mode README URLs use `raw.githubusercontent.com`:
+
+```html
+<p align="center">
+  <a href="https://gittensor.io/miners/repository?name=OWNER%2FREPO">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OWNER/REPO/gittensor-impact-assets/gittensor-impact-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/OWNER/REPO/gittensor-impact-assets/gittensor-impact-light.svg">
+      <img src="https://raw.githubusercontent.com/OWNER/REPO/gittensor-impact-assets/gittensor-impact-light.svg" alt="Gittensor contributor impact" width="600">
+    </picture>
+  </a>
+</p>
+```
+
 ## Inputs
 
 | Input | Default | Description |
@@ -59,6 +96,8 @@ Replace `OWNER` and `REPO` with your repository owner and name.
 | `until` | empty | Optional Git date window end. |
 | `ref` | `HEAD` | Git ref to analyze. |
 | `release-tag` | `gittensor-impact` | Stable release tag that stores generated SVG assets. |
+| `publish-mode` | `release` | `release` or `branch`. |
+| `asset-branch` | `gittensor-impact-assets` | Branch used when `publish-mode` is `branch`. |
 | `title` | repo-specific default | Optional card title. |
 | `subtitle` | built-in default | Optional card subtitle. |
 | `accent-color` | `#ff6a00` | Primary color for Gittensor contribution data. |

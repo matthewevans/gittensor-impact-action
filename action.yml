@@ -25,6 +25,14 @@ inputs:
     description: Stable release tag that stores the generated SVG assets.
     required: false
     default: gittensor-impact
+  publish-mode:
+    description: Where generated SVG assets are published. Use branch for repos with immutable releases.
+    required: false
+    default: release
+  asset-branch:
+    description: Branch used when publish-mode is branch.
+    required: false
+    default: gittensor-impact-assets
   title:
     description: Optional title rendered at the top of the card.
     required: false
@@ -145,19 +153,38 @@ runs:
         GH_TOKEN: ${{ inputs.github-token || github.token }}
         INPUT_REPO: ${{ inputs.repo }}
         INPUT_RELEASE_TAG: ${{ inputs.release-tag }}
+        INPUT_PUBLISH_MODE: ${{ inputs.publish-mode }}
+        INPUT_ASSET_BRANCH: ${{ inputs.asset-branch }}
       run: |
         set -euo pipefail
 
         repo="${INPUT_REPO:-$GITHUB_REPOSITORY}"
         out_dir="$RUNNER_TEMP/gittensor-impact"
-        python3 "$GITHUB_ACTION_PATH/scripts/publish_release_assets.py" \
-          --repo "$repo" \
-          --tag "$INPUT_RELEASE_TAG" \
-          "$out_dir/gittensor-impact-dark.svg" \
-          "$out_dir/gittensor-impact-light.svg"
-
-        dark_url="https://github.com/$repo/releases/download/$INPUT_RELEASE_TAG/gittensor-impact-dark.svg"
-        light_url="https://github.com/$repo/releases/download/$INPUT_RELEASE_TAG/gittensor-impact-light.svg"
+        case "$INPUT_PUBLISH_MODE" in
+          release)
+            python3 "$GITHUB_ACTION_PATH/scripts/publish_release_assets.py" \
+              --repo "$repo" \
+              --tag "$INPUT_RELEASE_TAG" \
+              "$out_dir/gittensor-impact-dark.svg" \
+              "$out_dir/gittensor-impact-light.svg"
+            dark_url="https://github.com/$repo/releases/download/$INPUT_RELEASE_TAG/gittensor-impact-dark.svg"
+            light_url="https://github.com/$repo/releases/download/$INPUT_RELEASE_TAG/gittensor-impact-light.svg"
+            ;;
+          branch)
+            python3 "$GITHUB_ACTION_PATH/scripts/publish_branch_assets.py" \
+              --repo "$repo" \
+              --branch "$INPUT_ASSET_BRANCH" \
+              --workdir "$RUNNER_TEMP/gittensor-impact-publish" \
+              "$out_dir/gittensor-impact-dark.svg" \
+              "$out_dir/gittensor-impact-light.svg"
+            dark_url="https://raw.githubusercontent.com/$repo/$INPUT_ASSET_BRANCH/gittensor-impact-dark.svg"
+            light_url="https://raw.githubusercontent.com/$repo/$INPUT_ASSET_BRANCH/gittensor-impact-light.svg"
+            ;;
+          *)
+            echo "Unsupported publish-mode: $INPUT_PUBLISH_MODE" >&2
+            exit 1
+            ;;
+        esac
         gittensor_url="https://gittensor.io/miners/repository?name=${repo/\//%2F}"
 
         {
