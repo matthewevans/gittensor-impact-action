@@ -106,6 +106,7 @@ runs:
         INPUT_LIGHT_BACKGROUND: ${{ inputs.light-background }}
         INPUT_GITTENSOR_API_URL: ${{ inputs.gittensor-api-url }}
         INPUT_PR_LIMIT: ${{ inputs.pr-limit }}
+        GH_TOKEN: ${{ inputs.github-token || github.token }}
       run: |
         set -euo pipefail
 
