@@ -36,7 +36,7 @@ tree as one author's additions, so the tool refuses to run on one.
 
 Usage
 -----
-    python3 scripts/gittensor_stats.py --repo phase-rs/phase --since "30 days ago" -o stats.json
+    python3 scripts/gittensor_stats.py --repo OWNER/REPO --since "30 days ago" -o stats.json
 """
 
 from __future__ import annotations
@@ -58,27 +58,26 @@ VALID_GROUPS = {"gittensor", "nongittensor", "bot"}
 # Repo-area bucketing (first matching prefix wins).
 # Only applied to non-generated paths, so data/ never reaches here.
 AREA_RULES: list[tuple[str, str]] = [
-    ("crates/engine/src/parser", "Parser"),
-    ("crates/engine", "Engine"),
-    ("crates/phase-ai", "AI"),
-    ("crates/phase-server", "Server"),
-    ("crates/server-core", "Server"),
-    ("crates/lobby-broker", "Server"),
-    ("crates/seat-reducer", "Server"),
-    ("crates/engine-wasm", "WASM"),
-    ("crates/draft-wasm", "WASM"),
-    ("crates/", "Other crates"),
-    ("client/src-tauri", "Desktop"),
+    (".github/", "CI"),
+    ("app/", "Application"),
+    ("apps/", "Applications"),
     ("client/", "Frontend"),
-    ("mtgish/", "mtgish"),
+    ("frontend/", "Frontend"),
+    ("web/", "Frontend"),
+    ("server/", "Server"),
+    ("backend/", "Server"),
+    ("api/", "API"),
+    ("src/", "Source"),
+    ("lib/", "Library"),
+    ("packages/", "Packages"),
+    ("crates/", "Rust crates"),
+    ("tests/", "Tests"),
+    ("test/", "Tests"),
     ("scripts/", "Tooling"),
     ("docs/", "Docs"),
-    (".claude/", "Agent tooling"),
-    (".agents/", "Agent tooling"),
-    ("deploy/", "Infra"),
-    ("docker/", "Infra"),
-    ("supabase/", "Infra"),
-    ("lobby-worker/", "Infra"),
+    ("deploy/", "Infrastructure"),
+    ("docker/", "Infrastructure"),
+    ("infra/", "Infrastructure"),
 ]
 
 

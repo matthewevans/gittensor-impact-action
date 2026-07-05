@@ -9,18 +9,6 @@ cards to either stable GitHub release assets or a dedicated assets branch.
 Generated images do not need to be committed to the target repository's default
 branch.
 
-## Example
-
-<p align="center">
-  <a href="https://gittensor.io/miners/repository?name=phase-rs%2Fphase">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/phase-rs/phase/gittensor-impact-assets/gittensor-impact-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/phase-rs/phase/gittensor-impact-assets/gittensor-impact-light.svg">
-      <img src="https://raw.githubusercontent.com/phase-rs/phase/gittensor-impact-assets/gittensor-impact-light.svg" alt="Gittensor contributor impact for phase.rs" width="600">
-    </picture>
-  </a>
-</p>
-
 ## Usage
 
 Create `.github/workflows/gittensor-impact.yml` in the repository you want to
@@ -45,6 +33,7 @@ jobs:
         with:
           accent-color: "#ff6a00"
           neutral-color: "#85898b"
+          title: "${{ github.repository }} is part of the Gittensor community"
 ```
 
 Run the workflow once, then add this to your README:
