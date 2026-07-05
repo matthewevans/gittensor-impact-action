@@ -11,7 +11,11 @@ branch.
 
 ## Example
 
-![Example Gittensor contributor impact card](docs/example.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/example-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/example-light.svg">
+  <img src="docs/example-light.svg" alt="Example Gittensor contributor impact card" width="600">
+</picture>
 
 ## Usage
 
