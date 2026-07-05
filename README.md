@@ -9,6 +9,10 @@ cards to either stable GitHub release assets or a dedicated assets branch.
 Generated images do not need to be committed to the target repository's default
 branch.
 
+## Example
+
+![Example Gittensor contributor impact card](docs/example.svg)
+
 ## Usage
 
 Create `.github/workflows/gittensor-impact.yml` in the repository you want to

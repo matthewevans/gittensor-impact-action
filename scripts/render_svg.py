@@ -66,6 +66,23 @@ def compact(n: int) -> str:
     return f"{sign}{n:,}"
 
 
+def window_label(window: dict) -> str:
+    since = window.get("since")
+    until = window.get("until")
+    first_commit = (window.get("first_commit") or "")[:10]
+    last_commit = (window.get("last_commit") or "")[:10]
+
+    if since == "30 days ago" and not until:
+        return "Reporting window: last 30 days"
+    if since and not until:
+        return f"Reporting window: since {since}"
+    if since and until:
+        return f"Reporting window: {since} to {until}"
+    if first_commit and last_commit:
+        return f"Reporting window: {first_commit} to {last_commit}"
+    return "Reporting window: all time"
+
+
 class Svg:
     def __init__(self, colors: dict[str, str]) -> None:
         self.colors = colors
@@ -144,8 +161,7 @@ def render(data: dict, theme: str, args: argparse.Namespace) -> str:
     n = data["groups"]["nongittensor"]
     repo = data.get("repo", "owner/repo")
     win = data.get("window", {})
-    span = win.get("since") or (win.get("first_commit") or "")[:10] or "all-time"
-    until = win.get("until") or "now"
+    span = window_label(win)
     title = args.title or f"{repo} is part of the Gittensor community"
     subtitle = args.subtitle or \
         "Rewarding meaningful merged contributions to tracked open-source repositories"
@@ -161,7 +177,7 @@ def render(data: dict, theme: str, args: argparse.Namespace) -> str:
     svg.text(48, 58, title, 28, c["text"], 760)
     svg.text(48, 92, subtitle, 19, c["muted"], 450)
     svg.text(1152, 58, repo, 18, c["muted"], 700, "end")
-    svg.text(1152, 92, f"{span} -> {until}", 16, c["muted2"], 450, "end")
+    svg.text(1152, 92, span, 16, c["muted2"], 450, "end")
     svg.line(48, 126, 1152, 126, c["border"])
 
     svg.rect(48, 154, 1104, 278, c["panel"], 22, c["border"])
