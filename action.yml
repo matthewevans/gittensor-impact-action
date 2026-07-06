@@ -60,9 +60,9 @@ inputs:
     description: Optional light theme background color.
     required: false
   gittensor-api-url:
-    description: Public Gittensor PR API URL.
+    description: Public Gittensor PR API URL. "auto" uses the per-repo endpoint.
     required: false
-    default: https://api.gittensor.io/prs
+    default: auto
   pr-limit:
     description: Maximum merged PRs to fetch from GitHub.
     required: false
@@ -114,12 +114,19 @@ runs:
         out_dir="$RUNNER_TEMP/gittensor-impact"
         mkdir -p "$out_dir"
 
+        # "auto" -> the per-repo endpoint; a full URL overrides; "" disables.
+        if [ "$INPUT_GITTENSOR_API_URL" = "auto" ]; then
+          gittensor_api_url="https://api.gittensor.io/repos/${repo//\//%2F}/prs"
+        else
+          gittensor_api_url="$INPUT_GITTENSOR_API_URL"
+        fi
+
         stats_args=(
           --repo-dir "$GITHUB_WORKSPACE"
           --repo "$repo"
           --ref "$INPUT_REF"
           --since "$INPUT_SINCE"
-          --gittensor-api-url "$INPUT_GITTENSOR_API_URL"
+          --gittensor-api-url "$gittensor_api_url"
           --pr-limit "$INPUT_PR_LIMIT"
           --out "$out_dir/stats.json"
         )

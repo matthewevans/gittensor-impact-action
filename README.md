@@ -103,7 +103,7 @@ Branch-mode README URLs use `raw.githubusercontent.com`:
 | `neutral-text-color` | neutral color | Optional text color for non-Gittensor labels. |
 | `dark-background` | theme default | Optional dark theme background color. |
 | `light-background` | theme default | Optional light theme background color. |
-| `gittensor-api-url` | `https://api.gittensor.io/prs` | Public Gittensor PR API URL. |
+| `gittensor-api-url` | `auto` | Public Gittensor PR API URL. `auto` uses the per-repo endpoint. |
 | `pr-limit` | `6000` | Maximum merged PRs to fetch from GitHub. |
 | `github-token` | `github.token` | Token with `contents: write` permission for release assets. |
 
